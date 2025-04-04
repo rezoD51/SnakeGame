@@ -1,0 +1,372 @@
+<div class="game-container">
+  <div class="score-panel">
+    <div>SKOR: <span id="score">0</span></div>
+    <div>EN YÜKSEK SKOR: <span id="high-score">0</span></div>
+  </div>
+  <canvas id="game" width="700" height="600"></canvas>
+</div>
+
+<script>
+class SnakeGame {
+  constructor() {
+    this.isProcessingInput = false;
+    this.canvas = document.getElementById('game');
+    this.context = this.canvas.getContext('2d');
+    this.scoreElement = document.getElementById('score');
+    this.highScoreElement = document.getElementById('high-score');
+    document.addEventListener('keydown', this.onKeyPress.bind(this));
+    
+    // Yeniden başlama kontrolü için ekledim
+    this.canRestart = true;
+    
+    // Oyun durumu için değişkenler
+    this.gameStarted = false;
+    this.gameOver = false;
+    this.score = 0;
+    this.highScore = localStorage.getItem('snakeHighScore') || 0;
+    this.highScoreElement.textContent = this.highScore;
+  }
+
+  init() {
+    this.positionX = this.positionY = 15;
+    this.appleX = this.appleY = 5;
+    this.tailSize = 5;
+    this.trail = [];
+    this.gridSize = 20;
+    this.tileCount = 30;
+    this.velocityX = this.velocityY = 0;
+    this.gameOver = false;
+    this.gameStarted = false;
+    this.score = 0;
+    this.scoreElement.textContent = '0';
+    this.canRestart = true; // Yeniden başlamaya izin ver
+    
+    // Renk paleti
+    this.colors = {
+      snake: '#4CAF50',
+      snakeHead: '#2E7D32',
+      apple: '#FF5252',
+      background: '#1A1A1A',
+      grid: '#333333',
+      text: '#E0E0E0',
+      overlay: 'rgba(30, 30, 30, 0.85)'
+    };
+    
+    this.applePulse = 0;
+    this.pulseDirection = 0.05;
+    
+    this.timer = setInterval(this.loop.bind(this), 1000 / 15);
+  }
+
+  reset() {
+    clearInterval(this.timer);
+    this.init();
+    this.gameOver = false; // Oyunun bittiğini temizle
+    this.gameStarted = false; // Başlangıç durumuna getir
+  }
+
+  loop() {
+    if (this.gameStarted && !this.gameOver) {
+      this.update();
+    }
+    this.draw();
+  }
+
+  update() {
+    this.positionX += this.velocityX;
+    this.positionY += this.velocityY;
+
+    if (this.positionX < 0 || this.positionX >= this.canvas.width / this.gridSize || 
+        this.positionY < 0 || this.positionY >= this.canvas.height / this.gridSize) {
+      this.endGame();
+      return;
+    }
+
+    this.trail.forEach(t => {
+      if (this.positionX === t.positionX && this.positionY === t.positionY) {
+        this.endGame();
+      }
+    });
+
+    this.trail.push({positionX: this.positionX, positionY: this.positionY});
+    while (this.trail.length > this.tailSize) {
+      this.trail.shift();
+    }
+
+    if (this.appleX === this.positionX && this.appleY === this.positionY) {
+      this.tailSize++;
+      this.score += 10;
+      this.scoreElement.textContent = this.score;
+      if (this.score > this.highScore) {
+        this.highScore = this.score;
+        this.highScoreElement.textContent = this.highScore;
+        localStorage.setItem('snakeHighScore', this.highScore);
+      }
+      this.spawnApple();
+    }
+    
+    this.applePulse += this.pulseDirection;
+    if (this.applePulse > 0.5 || this.applePulse < 0) {
+      this.pulseDirection *= -1;
+    }
+  }
+
+  spawnApple() {
+    let validPosition = false;
+    while (!validPosition) {
+      this.appleX = Math.floor(Math.random() * this.tileCount);
+      this.appleY = Math.floor(Math.random() * this.tileCount);
+      
+      validPosition = true;
+      for (let i = 0; i < this.trail.length; i++) {
+        if (this.trail[i].positionX === this.appleX && 
+            this.trail[i].positionY === this.appleY) {
+          validPosition = false;
+          break;
+        }
+      }
+    }
+  }
+
+  endGame() {
+    this.gameOver = true;
+    this.gameStarted = false;
+    clearInterval(this.timer);
+    
+    // Yeniden başlamak için küçük bir bekleme süresi ekledim
+    setTimeout(() => {
+      this.canRestart = true;
+    }, 200);
+  }
+
+  draw() {
+    // Arkaplan
+    this.context.fillStyle = this.colors.background;
+    this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    
+    // Izgara çizgileri
+    this.context.strokeStyle = this.colors.grid;
+    this.context.lineWidth = 0.5;
+    for (let i = 0; i <= this.canvas.width / this.gridSize; i++) {
+      this.context.beginPath();
+      this.context.moveTo(i * this.gridSize, 0);
+      this.context.lineTo(i * this.gridSize, this.canvas.height);
+      this.context.stroke();
+    }
+    
+    for (let i = 0; i <= this.canvas.height / this.gridSize; i++) {
+      this.context.beginPath();
+      this.context.moveTo(0, i * this.gridSize);
+      this.context.lineTo(this.canvas.width, i * this.gridSize);
+      this.context.stroke();
+    }
+    
+    // Başlangıç ekranı
+    if (!this.gameStarted && !this.gameOver) {
+      this.drawStartScreen();
+      return;
+    }
+    
+    // Oyun çizimleri
+    if (this.gameStarted) {
+      // Yılan çizimi
+      this.trail.forEach((t, index) => {
+        const isHead = index === this.trail.length - 1;
+        this.context.fillStyle = isHead ? this.colors.snakeHead : this.colors.snake;
+        
+        const radius = 5;
+        const x = t.positionX * this.gridSize;
+        const y = t.positionY * this.gridSize;
+        const size = this.gridSize - 2;
+        
+        this.context.beginPath();
+        this.context.roundRect(x, y, size, size, radius);
+        this.context.fill();
+        
+        if (isHead) {
+          const eyeSize = size / 5;
+          const eyeOffset = size / 4;
+          
+          this.context.fillStyle = 'white';
+          this.context.beginPath();
+          
+          if (this.velocityX === 1) {
+            this.context.arc(x + size - eyeOffset, y + eyeOffset, eyeSize, 0, Math.PI * 2);
+            this.context.arc(x + size - eyeOffset, y + size - eyeOffset, eyeSize, 0, Math.PI * 2);
+          } else if (this.velocityX === -1) {
+            this.context.arc(x + eyeOffset, y + eyeOffset, eyeSize, 0, Math.PI * 2);
+            this.context.arc(x + eyeOffset, y + size - eyeOffset, eyeSize, 0, Math.PI * 2);
+          } else if (this.velocityY === -1) {
+            this.context.arc(x + eyeOffset, y + eyeOffset, eyeSize, 0, Math.PI * 2);
+            this.context.arc(x + size - eyeOffset, y + eyeOffset, eyeSize, 0, Math.PI * 2);
+          } else {
+            this.context.arc(x + eyeOffset, y + size - eyeOffset, eyeSize, 0, Math.PI * 2);
+            this.context.arc(x + size - eyeOffset, y + size - eyeOffset, eyeSize, 0, Math.PI * 2);
+          }
+          
+          this.context.fill();
+        }
+      });
+      
+      // Elma çizimi
+      const appleSize = (this.gridSize - 5) * (1 + this.applePulse);
+      const appleX = this.appleX * this.gridSize + (this.gridSize - appleSize) / 2;
+      const appleY = this.appleY * this.gridSize + (this.gridSize - appleSize) / 2;
+      
+      this.context.fillStyle = this.colors.apple;
+      this.context.beginPath();
+      const radius = appleSize / 2;
+      this.context.arc(appleX + radius, appleY + radius, radius, 0, Math.PI * 2);
+      this.context.fill();
+      
+      this.context.strokeStyle = '#8BC34A';
+      this.context.lineWidth = 2;
+      this.context.beginPath();
+      this.context.moveTo(appleX + radius - 2, appleY + 2);
+      this.context.lineTo(appleX + radius - 5, appleY - 3);
+      this.context.stroke();
+    }
+    
+    // Oyun bitti ekranı
+    if (this.gameOver) {
+      this.drawGameOverScreen();
+    }
+  }
+
+  drawStartScreen() {
+    this.context.fillStyle = this.colors.overlay;
+    this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    
+    this.context.fillStyle = this.colors.text;
+    this.context.textAlign = 'center';
+    this.context.textBaseline = 'middle';
+    
+    this.context.font = '48px "Press Start 2P", cursive, Arial';
+    this.context.fillText('SNAKE GAME', this.canvas.width / 2, this.canvas.height / 2 - 60);
+    
+    this.context.font = '20px "Press Start 2P", cursive, Arial';
+    this.context.fillText('Başlamak için bir yön tuşuna basın', this.canvas.width / 2, this.canvas.height / 2 + 20);
+    
+    this.context.textAlign = 'left';
+  }
+
+  drawGameOverScreen() {
+    this.context.fillStyle = this.colors.overlay;
+    this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    
+    this.context.fillStyle = this.colors.text;
+    this.context.textAlign = 'center';
+    this.context.textBaseline = 'middle';
+    
+    this.context.font = '48px "Press Start 2P", cursive, Arial';
+    this.context.fillText('OYUN BİTTİ', this.canvas.width / 2, this.canvas.height / 2 - 60);
+    
+    this.context.font = '28px "Press Start 2P", cursive, Arial';
+    this.context.fillText(`SON SKOR: ${this.score}`, this.canvas.width / 2, this.canvas.height / 2);
+    
+    this.context.font = '16px "Press Start 2P", cursive, Arial';
+    this.context.fillText('Yeniden başlamak için SPACE tuşuna basın', this.canvas.width / 2, this.canvas.height / 2 + 80);
+    
+    this.context.textAlign = 'left';
+  }
+
+  onKeyPress(e) {
+    // Oyun bittiyse ve SPACE tuşuna basıldıysa ve yeniden başlamaya izin varsa
+    if (this.gameOver && e.keyCode === 32 && this.canRestart) {
+      this.canRestart = false; // Yeniden başlamayı engelle
+      this.reset();
+      return;
+    }
+  
+    // Oyun başlamadıysa ve bir yön tuşuna basıldıysa
+    if (!this.gameStarted && (e.keyCode >= 37 && e.keyCode <= 40)) {
+      this.gameStarted = true;
+      this.gameOver = false;
+      if (e.keyCode === 37) {
+        this.velocityX = -1;
+        this.velocityY = 0;
+      } else if (e.keyCode === 38) {
+        this.velocityX = 0;
+        this.velocityY = -1;
+      } else if (e.keyCode === 39) {
+        this.velocityX = 1;
+        this.velocityY = 0;
+      } else if (e.keyCode === 40) {
+        this.velocityX = 0;
+        this.velocityY = 1;
+      }
+      return;
+    }
+  
+    // Oyun başlamadıysa veya bittiyse diğer tuşları görmezden gel
+    if (!this.gameStarted || this.gameOver) return;
+  
+    // Son hareketin işlenmesini beklemek için bir kontrol
+    if (this.isProcessingInput) return;
+    this.isProcessingInput = true;
+  
+    // Yön değiştirme mantığı
+    if (e.keyCode === 37 && this.velocityX !== 1) {
+      this.velocityX = -1;
+      this.velocityY = 0;
+    } else if (e.keyCode === 38 && this.velocityY !== 1) {
+      this.velocityX = 0;
+      this.velocityY = -1;
+    } else if (e.keyCode === 39 && this.velocityX !== -1) {
+      this.velocityX = 1;
+      this.velocityY = 0;
+    } else if (e.keyCode === 40 && this.velocityY !== -1) {
+      this.velocityX = 0;
+      this.velocityY = 1;
+    }
+  
+    // Sonraki güncelleme döngüsünde tekrar giriş kabul et
+    setTimeout(() => {
+      this.isProcessingInput = false;
+    }, 1000 / 15);
+  }
+}
+
+const game = new SnakeGame();
+window.onload = () => game.init();
+</script>
+
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+<style>
+  body {
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #121212;
+    overflow: hidden;
+    font-family: 'Press Start 2P', cursive;
+    color: #E0E0E0;
+  }
+  
+  .game-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+  
+  .score-panel {
+    display: flex;
+    justify-content: space-between;
+    width: 700px;
+    font-size: 20px;
+    padding: 10px;
+    background-color: #1A1A1A;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  }
+  
+  canvas {
+    border: 2px solid #333;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    border-radius: 5px;
+  }
+</style>
