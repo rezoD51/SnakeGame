@@ -15,9 +15,9 @@ HTML5 Canvas ve Vanilla JavaScript ile geliştirilmiş klasik Snake oyunu.
   - En yüksek skor lokal depolamada saklanır
 
 ## 📸 Ekran Görüntüleri
-| Başlangıç Ekranı | Oyun İçi | 
+| Başlangıç Ekranı | Oyun İçi |  Oyun Sonu |   
 |-------------------|----------|
-| ![Start Screen](Snake-Oyunu/assets/screenshots/start.png) | ![Gameplay](assets/screenshots/gameplay.png) |
+| ![Start Screen](Snake-Oyunu/assets/screenshots/start.png) | ![Gameplay](Snake-Oyunu/assets/screenshots/gameplay.png) | ![Gameend](Snake-Oyunu/assets/screenshots/gameend.png) |
 
 ## ⚙️ Teknolojiler
 - HTML5 Canvas
