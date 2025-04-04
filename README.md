@@ -16,13 +16,13 @@ HTML5 Canvas ve Vanilla JavaScript ile geliştirilmiş klasik Snake oyunu.
 
 ## 📸 Ekran Görüntüleri
 | Başlangıç Ekranı |   
-|------------------|
+
 | ![Start Screen](Snake-Oyunu/assets/screenshots/start.png) |
 | Oyun İçi |
-|----------|
+
 |![Gameplay](Snake-Oyunu/assets/screenshots/gameplay.png) |
 | Oyun Sonu | 
-|-----------|
+
 | ![Gameend](Snake-Oyunu/assets/screenshots/gameend.png) |
 
 ## ⚙️ Teknolojiler
