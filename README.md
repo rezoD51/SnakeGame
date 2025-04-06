@@ -59,12 +59,12 @@ class SnakeGame {
   <canvas id="game" width="700" height="600"></canvas>
 </div>
 
-Skor Paneli: Mevcut skor ve en yüksek skor bilgilerini gösterir.
-Canvas: Oyunun çizildiği 700x600 piksel boyutunda bir alan.
+// Skor Paneli: Mevcut skor ve en yüksek skor bilgilerini gösterir.
+// Canvas: Oyunun çizildiği 700x600 piksel boyutunda bir alan.
 ----------------------------------------------------------------------------------------------------------
 2. JavaScript Yapısı
 A. SnakeGame Sınıfı
-Oyunun tüm mantığını yöneten temel sınıf.
+// Oyunun tüm mantığını yöneten temel sınıf.
 ----------------------------------------------------------------------------------------------------------
 B. Constructor (Yapıcı Metod)
 
@@ -84,8 +84,8 @@ constructor() {
   this.highScoreElement.textContent = this.highScore;
 }
 
-Değişkenler: Oyun durumu, skor, canvas bağlantıları.
-Event Listener: Klavye girişlerini dinler.
+// Değişkenler: Oyun durumu, skor, canvas bağlantıları.
+// Event Listener: Klavye girişlerini dinler.
 ----------------------------------------------------------------------------------------------------------
 C. init() Metodu
 
@@ -104,8 +104,8 @@ init() {
   this.timer = setInterval(this.loop.bind(this), 1000 / 15); // ~15 FPS
 }
 
-Başlangıç Değerleri: Yılan ve elma pozisyonları, hız, skor sıfırlama.
-Zamanlayıcı: Oyun döngüsünü başlatır.
+// Başlangıç Değerleri: Yılan ve elma pozisyonları, hız, skor sıfırlama.
+// Zamanlayıcı: Oyun döngüsünü başlatır.
 ----------------------------------------------------------------------------------------------------------
 D. Oyun Döngüsü (loop(), update(), draw())
 
@@ -165,8 +165,8 @@ draw() {
   this.context.arc(...); // Elma çiz
 }
 
-update(): Yılanın hareketi, çarpışma kontrolü, skor artışı.
-draw(): Canvas üzerine yılan, elma ve arkaplanın çizimi.
+// update(): Yılanın hareketi, çarpışma kontrolü, skor artışı.
+// draw(): Canvas üzerine yılan, elma ve arkaplanın çizimi.
 ----------------------------------------------------------------------------------------------------------
 E. Yardımcı Metodlar
 
@@ -216,29 +216,29 @@ onKeyPress(e) {
   }
 }
 
-Yön Tuşları: Yılanın hareketini başlatır.
-SPACE Tuşu: Oyunu yeniden başlatır.
-Engelleme Mekanizması: Ardışık tuş basımlarını önler.
+// Yön Tuşları: Yılanın hareketini başlatır.
+// SPACE Tuşu: Oyunu yeniden başlatır.
+// Engelleme Mekanizması: Ardışık tuş basımlarını önler.
 ----------------------------------------------------------------------------------------------------------
 3. CSS Yapısı
 
-Responsive Tasarım: Skor paneli ve canvas sabit genişlikte.
-Retro Stil: Press Start 2P fontu ve koyu renk teması.
+// Responsive Tasarım: Skor paneli ve canvas sabit genişlikte.
+// Retro Stil: Press Start 2P fontu ve koyu renk teması.
 
 ----------------------------------------------------------------------------------------------------------
 4. Önemli Özellikler
 
-Lokal Depolama: En yüksek skor localStorage ile saklanır.
-Pulse Efekti: Elma büyüyüp küçülerek dikkat çeker.
-Göz Çizimi: Yılanın başı yönüne göre gözler konumlandırılır.
-Yuvarlak Köşeler: Yılan ve elma görselleri yuvarlak köşelidir.
+// Lokal Depolama: En yüksek skor localStorage ile saklanır.
+// Pulse Efekti: Elma büyüyüp küçülerek dikkat çeker.
+// Göz Çizimi: Yılanın başı yönüne göre gözler konumlandırılır.
+// Yuvarlak Köşeler: Yılan ve elma görselleri yuvarlak köşelidir.
 
 ----------------------------------------------------------------------------------------------------------
 5. Oyun Akışı
 
-Başlangıç Ekranı: "Bir yön tuşuna basın" mesajı.
-Oyun İçi: Yılanı yön tuşlarıyla kontrol et, elmaları topla.
-Oyun Sonu: Duvara veya kuyruğa çarpınca skor gösterilir.
-Yeniden Başlatma: SPACE tuşuna basarak tekrar oyna.
+// Başlangıç Ekranı: "Bir yön tuşuna basın" mesajı.
+// Oyun İçi: Yılanı yön tuşlarıyla kontrol et, elmaları topla.
+// Oyun Sonu: Duvara veya kuyruğa çarpınca skor gösterilir.
+// Yeniden Başlatma: SPACE tuşuna basarak tekrar oyna.
   }
 }
