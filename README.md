@@ -2,6 +2,7 @@
 
 HTML5 Canvas ve Vanilla JavaScript ile geliştirilmiş klasik Snake oyunu.
 
+Oynamak İçin Tıkla
 [![Play Online](https://img.shields.io/badge/Play-GitHub%20Pages-blue)](https://rezoD51.github.io/SnakeGame/)
 ## 🎮 Oynanış ve Kurallar
 - **Amaç**: Yılanı kontrol ederek elmaları toplayıp skoru artırmak
