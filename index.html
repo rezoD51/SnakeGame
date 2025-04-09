@@ -534,10 +534,6 @@
             roomDisplay.textContent = `Oda: ${room}`;
             scoreDisplay.textContent = `Skor: ${score}`;
             timeDisplay.textContent = `Zaman: ${Math.floor(gameTime)}`;
-
-             if (powerup) {
-            const remaining = powerup.duration - (Date.now() - powerupStartTime);
-            updatePowerupDisplay(remaining);
         }
         
         function drawGame() {
