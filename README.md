@@ -23,10 +23,6 @@ Oynamak İçin Tıkla
 
 ## 📸 Ekran Görüntüleri
 
-| Başlangıç Ekranı |   
-
-|![Start Screen](Snake-Oyunu/assets/screenshots/start.png) |
-
 | Oyun İçi |
 
 |![Gameplay](Snake-Oyunu/assets/screenshots/gameplay.png) |
