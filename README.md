@@ -37,119 +37,77 @@ Oynamak İçin Tıkla
 - CSS3
 
 ## 📁 Kod Yapısı
-1. Temel Yapı
+🔧 1. HTML Yapısı
 
-const canvas = document.getElementById('game-board');
-const ctx = canvas.getContext('2d');
-Oyun alanını oluşturmak için HTML5 Canvas kullanılmıştır
+<canvas id="game-board">: Oyun alanı (800x800 boyutunda).
+#info-panel: Oda numarası, skor ve zaman bilgilerini gösteriyor.
+#mission-display: Oyuncuya verilen görevi gösterir.
+#powerup-display: Aktif güçlendirmeyi gösterir.
+#game-over: Oyun bittiğinde gösterilen kutu ve "Yeniden Başla" butonu.
+.controls: Kullanıcıya kontrol talimatları verir (WASD veya yön tuşları).
 
-ctx değişkeni ile çizim işlemleri yapılır
 
-2. Oyun Değişkenleri
+🎮 2. JavaScript Fonksiyonları
+🔁 Genel Değişkenler:
+snake: Yılanın konum bilgisi (dizi).
+food, walls, keys, locks, specialItems: Oyunda çıkan nesneler.
+xVelocity, yVelocity: Yılanın yönü.
+score, room, gameTime, survivalTime: Puan, oda sayısı, zaman gibi bilgiler.
 
-let snake = []; // Yılanın segmentlerini tutan dizi
-let food = []; // Yenilebilir nesneler
-let walls = []; // Engel/düvar nesneleri
-let xVelocity = 0, yVelocity = 0; // Yılanın hareket yönü
-let score = 0, room = 1, gameTime = 0; // Oyun istatistikleri
-Tüm oyun durumu bu değişkenlerde saklanır
+🚪 Oda Sistemi:
 
-Diziler nesnelerin konumlarını (x,y) tutar
+function generateRoom() { ... }
+Her oda rastgele görev ve nesnelerle yeniden oluşturulur. Bazı görev türleri:
 
-3. Oyun Döngüsü
+survive: Belirli saniye hayatta kal.
+collectFruits: Bütün meyveleri topla.
+unlockLocks: Anahtarlarla kilit aç.
+collectSomeFruits: Belirli sayıda meyve topla.
 
-function gameLoop() {
-    clearBoard();
-    moveSnake();
-    checkCollisions();
-    checkMission();
-    drawGame();
-    updateTime();
-}
-Her frame'de sırasıyla:
+💥 Görev Sistemi:
 
-Ekran temizlenir
+function checkMission() { ... }
+Her görevin tamamlanma koşulu takip edilir ve gerçekleştiğinde completeRoom() fonksiyonu ile bir sonraki odaya geçilir.
 
-Yılan hareket ettirilir
+🧱 Duvarlar:
+generateWalls() fonksiyonu ile sabit ve kırılabilir duvarlar oluşturuluyor.
+breakable özelliği varsa yılan çarptığında kırılıyor, puan kazandırıyor.
 
-Çarpışmalar kontrol edilir
+🔑 Anahtar ve Kilit Mekaniği:
+keys dizisi: Anahtar konumları.
+locks dizisi: Kilit konumları.
+Anahtar alındığında yılan uzar, kilit açıldığında yılan kısalır.
 
-Görev durumu kontrol edilir
+🪙 Güçlendirmeler:
 
-Oyun çizilir
+function activateRandomPowerup() { ... }
+"Şans Kurabiyesi" adı verilen özel bir nesne %30 ihtimalle çıkar. Rastgele şu güçlerden biri verilir:
+Hız artışı
+Hız düşüşü
+Çift puan
+Duvarlardan geçme
 
-Zaman güncellenir
+⏲ Zaman ve Ekran Güncellemeleri:
+updateTime(): Zaman takibi.
+updateDisplays(): Skor ve oda bilgilerini günceller.
+updatePowerupDisplay(): Aktif güçlendirme kalan süresini gösterir.
 
-4. Yılan Hareketi
+👀 Çizim İşlemleri:
 
-function moveSnake() {
-    const head = {
-        x: (snake[0].x + xVelocity + tileCount) % tileCount,
-        y: (snake[0].y + yVelocity + tileCount) % tileCount
-    };
-    snake.unshift(head);
-    if (!checkFoodCollision(head)) snake.pop();
-}
-Yılanın başına yeni bir segment eklenir
+function drawGame() { ... }
+Tüm nesneler (yılan, meyve, duvar, anahtar, kilit vs.) bu fonksiyonla canvas'a çizilir.
 
-Yemek yenmediyse kuyruktan bir segment çıkarılır
+❌ Oyun Bittiğinde:
 
-Modulo operatörü ile ekran sınırlarında dönme sağlanır
+function endGame() { ... }
+Yılan kendine veya duvara çarparsa, oyun durur. Skor ve oda sayısı gösterilir.
 
-5. Çarpışma Kontrolü
+🔁 Yeniden Başlat:
 
-function checkCollisions() {
-    // Duvara çarpma kontrolü
-    const wallCollision = walls.some(wall => wall.x === head.x && wall.y === head.y);
-    
-    // Kendine çarpma kontrolü
-    for (let i = 1; i < snake.length; i++) {
-        if (head.x === snake[i].x && head.y === snake[i].y) endGame();
-    }
-}
-some() metodu ile duvar çarpışması kontrol edilir
+function restartGame() { ... }
+"Yeniden Başla" butonuyla oyun sıfırlanır ve baştan başlar.
 
-Döngü ile yılanın kendine çarpıp çarpmadığı kontrol edilir
+⌨️ Klavye Kontrolleri:
 
-6. Görev Sistemi
-   
-function setRandomMission() {
-    const missions = [
-        { type: 'survive', target: 35, text: "35 saniye boyunca hayatta kal" },
-        { type: 'collectFruits', target: 0, text: "Bütün meyveleri topla" }
-    ];
-    // Rastgele görev seçimi
-}
-Farklı görev tipleri tanımlanmıştır
-
-Her oda için rastgele görev seçilir
-
-7. Güçlendirmeler (Power-ups)
-
-function activateRandomPowerup() {
-    const powerups = [
-        { name: "Hız Artışı", type: "speedUp", duration: 10000 },
-        { name: "Çift Puan", type: "doubleScore", duration: 15000 }
-    ];
-    // Rastgele güçlendirme seçimi ve etkinleştirme
-}
-Geçici süreli özel yetenekler içerir
-
-Her biri farklı süre ve etkilere sahiptir
-
-8. Oyun Çizimleri
-
-function drawGame() {
-    // Yılan çizimi
-    snake.forEach((segment, index) => {
-        if (index === 0) {
-            // Baş kısmı farklı çiz
-        } else {
-            // Normal segmentler
-        }
-    });
-    
-}
-Canvas API kullanılarak tüm oyun elemanları çizilir
-
-Yılanın başı ve gövdesi farklı şekillerde çizilir
+document.addEventListener('keydown', ...)
+WASD veya yön tuşları ile yılan yönlendirilir. Görev tamamlandığında ilerlemek için bir tuşa basılır.
