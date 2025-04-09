@@ -1,191 +1,236 @@
-1. HTML Yapısı
-----------------------------------------------------------------------------------------------------------
-<div class="game-container">
-  <div class="score-panel">
-    <div>SKOR: <span id="score">0</span></div>
-    <div>EN YÜKSEK SKOR: <span id="high-score">0</span></div>
-  </div>
-  <canvas id="game" width="700" height="600"></canvas>
-</div>
+Oyunun Temel Bileşenleri
+1. Değişkenler ve Sabitler
 
-Skor Paneli: Mevcut skor ve en yüksek skor bilgilerini gösterir.
-Canvas: Oyunun çizildiği 700x600 piksel boyutunda bir alan.
-----------------------------------------------------------------------------------------------------------
-2. JavaScript Yapısı
-A. SnakeGame Sınıfı
-Oyunun tüm mantığını yöneten temel sınıf.
-----------------------------------------------------------------------------------------------------------
-B. Constructor (Yapıcı Metod)
+const canvas = document.getElementById('game-board');
+const ctx = canvas.getContext('2d');
+const gridSize = 20;
+const tileCount = canvas.width / gridSize;
 
-constructor() {
-  this.isProcessingInput = false;
-  this.canvas = document.getElementById('game');
-  this.context = this.canvas.getContext('2d');
-  this.scoreElement = document.getElementById('score');
-  this.highScoreElement = document.getElementById('high-score');
-  document.addEventListener('keydown', this.onKeyPress.bind(this));
-  
-  // Oyun durumu değişkenleri
-  this.gameStarted = false;
-  this.gameOver = false;
-  this.score = 0;
-  this.highScore = localStorage.getItem('snakeHighScore') || 0;
-  this.highScoreElement.textContent = this.highScore;
+// Oyun durumu değişkenleri
+let snake = []; // Yılanın segmentlerini tutar
+let food = []; // Yenilebilir meyveler
+let walls = []; // Engeller
+let keys = []; // Anahtarlar
+let locks = []; // Kilitler
+let specialItems = []; // Özel güçlendirmeler
+let xVelocity = 0, yVelocity = 0; // Yılanın hareket yönü
+let score = 0, room = 1, gameTime = 0; // Oyun istatistikleri
+let gameRunning = true, gameSpeed = 100; // Oyun kontrol değişkenleri
+let powerup = null, powerupStartTime = 0; // Güçlendirme bilgileri
+let mission = '', missionType = '', missionProgress = 0, missionTarget = 0; // Görev bilgileri
+
+2. Renk Paleti
+
+const colors = {
+    snake: '#2ecc71',
+    snakeHead: '#27ae60',
+    food: '#e74c3c',
+    wall: '#2c3e50',
+    breakableWall: '#34495e',
+    key: '#f39c12',
+    lock: '#9b59b6',
+    special: '#1abc9c',
+    background: '#111',
+    grid: '#1a1a1a'
+};
+
+Temel Fonksiyonlar
+
+1. Oyun Başlatma ve Yönetim
+
+function initGame() {
+    // Oyun durumunu sıfırlar
+    snake = [{x: 20, y: 20}];
+    xVelocity = yVelocity = 0;
+    score = 0; room = 1;
+    gameRunning = true;
+    
+    generateRoom(); // İlk oda oluşturulur
+    startGameLoop(); // Oyun döngüsü başlatılır
+    updateDisplays(); // UI güncellenir
 }
 
-Değişkenler: Oyun durumu, skor, canvas bağlantıları.
-Event Listener: Klavye girişlerini dinler.
-----------------------------------------------------------------------------------------------------------
-C. init() Metodu
-
-init() {
-  this.positionX = this.positionY = 15; // Yılanın başlangıç pozisyonu
-  this.appleX = this.appleY = 5;        // Elmanın başlangıç pozisyonu
-  this.tailSize = 5;                    // Başlangıçta 5 parçalık kuyruk
-  this.trail = [];                      // Yılanın kuyruk pozisyonları
-  this.gridSize = 20;                   // Kare boyutu (piksel)
-  this.tileCount = 30;                  // Izgara boyutu (kare sayısı)
-  this.velocityX = this.velocityY = 0;  // Hareket yönü
-  this.gameOver = false;
-  this.score = 0;
-  
-  // Renk paleti ve zamanlayıcı
-  this.timer = setInterval(this.loop.bind(this), 1000 / 15); // ~15 FPS
+function startGameLoop() {
+    clearInterval(gameInterval);
+    gameInterval = setInterval(gameLoop, gameSpeed);
 }
 
-Başlangıç Değerleri: Yılan ve elma pozisyonları, hız, skor sıfırlama.
-Zamanlayıcı: Oyun döngüsünü başlatır.
-----------------------------------------------------------------------------------------------------------
-D. Oyun Döngüsü (loop(), update(), draw())
-
-loop() {
-  if (this.gameStarted && !this.gameOver) {
-    this.update(); // Konum ve çarpışma kontrolü
-  }
-  this.draw();     // Görsel çizimler
-}
-
-update() {
-  // Yılanın hareketi
-  this.positionX += this.velocityX;
-  this.positionY += this.velocityY;
-
-  // Duvar çarpışma kontrolü
-  if (this.positionX < 0 || this.positionX >= this.tileCount || 
-      this.positionY < 0 || this.positionY >= this.tileCount) {
-    this.endGame();
-  }
-
-  // Kendine çarpma kontrolü
-  this.trail.forEach(t => {
-    if (t.positionX === this.positionX && t.positionY === this.positionY) {
-      this.endGame();
+function gameLoop() {
+    if (gameRunning && !isWaitingForInput) {
+        clearBoard();
+        moveSnake();
+        checkCollisions();
+        checkMission();
+        updatePowerup();
+        drawGame();
+        updateTime();
     }
-  });
-
-  // Kuyruk güncelleme
-  this.trail.push({ positionX: this.positionX, positionY: this.positionY });
-  while (this.trail.length > this.tailSize) {
-    this.trail.shift();
-  }
-
-  // Elma toplama
-  if (this.positionX === this.appleX && this.positionY === this.appleY) {
-    this.tailSize++;
-    this.score += 10;
-    this.spawnApple(); // Yeni elma oluştur
-  }
 }
+2. Oda ve Görev Yönetimi
 
-draw() {
-  // Arkaplan ve ızgara çizimi
-  this.context.fillStyle = this.colors.background;
-  this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
-
-  // Yılan çizimi
-  this.trail.forEach((t, index) => {
-    const isHead = index === this.trail.length - 1;
-    this.context.fillStyle = isHead ? this.colors.snakeHead : this.colors.snake;
-    this.context.roundRect(...); // Yuvarlak dikdörtgen çiz
-  });
-
-  // Elma çizimi (pulse efekti ile)
-  const appleSize = (this.gridSize - 5) * (1 + this.applePulse);
-  this.context.arc(...); // Elma çiz
-}
-
-update(): Yılanın hareketi, çarpışma kontrolü, skor artışı.
-draw(): Canvas üzerine yılan, elma ve arkaplanın çizimi.
-----------------------------------------------------------------------------------------------------------
-E. Yardımcı Metodlar
-
-spawnApple() {
-  // Elmayı rastgele konuma yerleştir (yılanın üzerine gelmeyecek şekilde)
-  let validPosition = false;
-  while (!validPosition) {
-    this.appleX = Math.floor(Math.random() * this.tileCount);
-    this.appleY = Math.floor(Math.random() * this.tileCount);
-    validPosition = !this.trail.some(t => t.positionX === this.appleX && t.positionY === this.appleY);
-  }
-}
-
-endGame() {
-  this.gameOver = true;
-  clearInterval(this.timer); // Zamanlayıcıyı durdur
-  // En yüksek skoru güncelle
-  if (this.score > this.highScore) {
-    localStorage.setItem('snakeHighScore', this.score);
-  }
-}
-----------------------------------------------------------------------------------------------------------
-F. Kullanıcı Girişi (onKeyPress())
-
-onKeyPress(e) {
-  // SPACE tuşu: Yeniden başlat
-  if (this.gameOver && e.keyCode === 32) {
-    this.reset();
-    return;
-  }
-
-  // Yön tuşları: Hareket başlat
-  if (!this.gameStarted && (e.keyCode >= 37 && e.keyCode <= 40)) {
-    this.gameStarted = true;
-    switch(e.keyCode) {
-      case 37: this.velocityX = -1; break; // Sol
-      case 38: this.velocityY = -1; break; // Yukarı
-      case 39: this.velocityX = 1;  break; // Sağ
-      case 40: this.velocityY = 1;  break; // Aşağı
+function generateRoom() {
+    // Oda içeriğini oluşturur
+    generateWalls();
+    setRandomMission();
+    
+    // Özel güçlendirme ekleme (%30 şans)
+    if (Math.random() < 0.3) {
+        specialItems.push({
+            x: Math.floor(Math.random() * tileCount),
+            y: Math.floor(Math.random() * tileCount),
+            type: 'luckyCookie'
+        });
     }
-  }
-
-  // Hareket sırasında yön değiştirme
-  if (!this.isProcessingInput) {
-    // Örneğin: Sağa giderken sola dönemez
-    if (e.keyCode === 37 && this.velocityX !== 1) { /*...*/ }
-  }
+    
+    // Göreve göre meyve, anahtar veya kilit yerleştirir
+    if (missionType === 'collectFruits' || missionType === 'collectSomeFruits') {
+        const fruitCount = missionType === 'collectFruits' ? 8 + Math.floor(Math.random() * 7) : missionTarget;
+        for (let i = 0; i < fruitCount; i++) {
+            placeValidItem(food, 'food');
+        }
+    } else {
+        placeValidItem(food, 'food');
+    }
+    
+    if (missionType === 'unlockLocks') {
+        const lockCount = 4 + Math.floor(Math.random() * 4);
+        for (let i = 0; i < lockCount; i++) {
+            placeValidItem(locks, 'lock');
+            placeValidItem(keys, 'key');
+        }
+    }
 }
 
-Yön Tuşları: Yılanın hareketini başlatır.
-SPACE Tuşu: Oyunu yeniden başlatır.
-Engelleme Mekanizması: Ardışık tuş basımlarını önler.
-----------------------------------------------------------------------------------------------------------
-3. CSS Yapısı
+function setRandomMission() {
+    const missions = [
+        { type: 'survive', target: 35, text: "35 saniye boyunca hayatta kal" },
+        { type: 'collectFruits', target: 0, text: "Bütün meyveleri topla" },
+        { type: 'unlockLocks', target: 0, text: "Anahtarları yerleştirip bütün kilitleri aç" },
+        { type: 'collectSomeFruits', target: 6, text: "6 meyve topla" }
+    ];
+    
+    const selected = missions[Math.floor(Math.random() * missions.length)];
+    missionType = selected.type;
+    missionTarget = selected.target;
+    mission = selected.text;
+    missionProgress = 0;
+    
+    missionDisplay.innerHTML = `Görev: <span class="mission-critical">${mission}</span>`;
+}
 
-Responsive Tasarım: Skor paneli ve canvas sabit genişlikte.
-Retro Stil: Press Start 2P fontu ve koyu renk teması.
+3. Yılan Hareketi ve Çarpışma Kontrolleri
 
-----------------------------------------------------------------------------------------------------------
-4. Önemli Özellikler
+function moveSnake() {
+    const head = {
+        x: (snake[0].x + xVelocity + tileCount) % tileCount,
+        y: (snake[0].y + yVelocity + tileCount) % tileCount
+    };
+    
+    snake.unshift(head);
+    
+    if (!checkFoodCollision(head) && !checkSpecialItemCollision(head)) {
+        snake.pop();
+    }
+}
 
-Lokal Depolama: En yüksek skor localStorage ile saklanır.
-Pulse Efekti: Elma büyüyüp küçülerek dikkat çeker.
-Göz Çizimi: Yılanın başı yönüne göre gözler konumlandırılır.
-Yuvarlak Köşeler: Yılan ve elma görselleri yuvarlak köşelidir.
+function checkCollisions() {
+    const head = snake[0];
+    
+    // Duvar çarpışması kontrolü
+    const wallCollision = walls.some(wall => {
+        if (wall.x === head.x && wall.y === head.y) {
+            if (wall.breakable) {
+                walls = walls.filter(w => !(w.x === wall.x && w.y === wall.y));
+                score += 5;
+                return false;
+            }
+            return true;
+        }
+        return false;
+    });
 
-----------------------------------------------------------------------------------------------------------
-5. Oyun Akışı
+    if (wallCollision) {
+        endGame();
+        return;
+    }
 
-Başlangıç Ekranı: "Bir yön tuşuna basın" mesajı.
-Oyun İçi: Yılanı yön tuşlarıyla kontrol et, elmaları topla.
-Oyun Sonu: Duvara veya kuyruğa çarpınca skor gösterilir.
-Yeniden Başlatma: SPACE tuşuna basarak tekrar oyna.
+    // Kendine çarpma kontrolü
+    for (let i = 1; i < snake.length; i++) {
+        if (head.x === snake[i].x && head.y === snake[i].y) {
+            endGame();
+            return;
+        }
+    }
+    
+    checkKeyCollision(head);
+    checkLockCollision(head);
+}
+
+4. Güçlendirme Sistemi
+
+function activateRandomPowerup() {
+    const powerups = [
+        { 
+            name: "Hız Artışı", 
+            type: "speedUp", 
+            duration: 10000, // 10 saniye
+            effect: () => { 
+                gameSpeed = 50; 
+                startGameLoop(); 
+            } 
+        },
+        { 
+            name: "Hız Azalışı", 
+            type: "speedDown", 
+            duration: 10000,
+            effect: () => { 
+                gameSpeed = 150; 
+                startGameLoop(); 
+            } 
+        },
+        { 
+            name: "Çift Puan", 
+            type: "doubleScore", 
+            duration: 15000 
+        },
+        { 
+            name: "Duvar Geçme", 
+            type: "wallPass", 
+            duration: 8000 
+        }
+    ];
+    
+    powerup = powerups[Math.floor(Math.random() * powerups.length)];
+    powerupStartTime = Date.now();
+    powerup.effect();
+    updatePowerupDisplay();
+}
+
+5. Çizim Fonksiyonları
+
+function drawGame() {
+    // Duvarları çiz
+    walls.forEach(wall => {
+        if(wall.breakable) {
+            // Kırılabilir duvar çizimi
+        } else {
+            // Normal duvar çizimi
+        }
+    });
+    
+    // Meyveleri çiz
+    food.forEach(item => {
+        // Daire şeklinde meyve çizimi
+    });
+    
+    // Yılanı çiz
+    snake.forEach((segment, index) => {
+        if (index === 0) {
+            // Baş kısmı (gözlerle birlikte)
+        } else {
+            // Vücut segmentleri
+        }
+    });
+    
+    // Diğer öğeleri çiz (anahtarlar, kilitler, özel güçlendirmeler)
+}
