@@ -142,4 +142,7 @@ function restartGame() { ... }
 ⌨️ Klavye Kontrolleri:
 
 document.addEventListener('keydown', ...)
-WASD veya yön tuşları ile yılan yönlendirilir. Görev tamamlandığında ilerlemek için bir tuşa basılır.
+
+WASD veya yön tuşları ile yılan yönlendirilir.
+
+Görev tamamlandığında ilerlemek için bir tuşa basılır.
